@@ -7,8 +7,9 @@ on:
     paths:
       - "docs/**"
       - "package.json"
-      - "yarn.lock"
+      - "pnpm-lock.yaml"
       - "Dockerfile"
+      - ".github/workflows/doc-test.yml"
   push:
     branches:
       - "*"
@@ -16,22 +17,28 @@ on:
     paths:
       - "docs/**"
       - "package.json"
-      - "yarn.lock"
+      - "pnpm-lock.yaml"
       - "Dockerfile"
+      - ".github/workflows/doc-test.yml"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up node
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: "15.x"
-          cache: "npm"
-      - name: Build vuepress docs
-        run: npm install && npm run docs:build
+          version: 9
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build vitepress docs
+        run: pnpm run docs:build
 
   automerge:
     needs: test
@@ -42,7 +49,6 @@ jobs:
     steps:
       - uses: fastify/github-action-merge-dependabot@v3
         if: >-
-          ${{ github.actor == 'dependabot[bot]' && github.event_name ==
-          'pull_request' }}
+          ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
